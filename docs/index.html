@@ -1,28 +1,250 @@
-<html>
-  <head>
-    <title>写给我可爱的宝宝的表白网站</title>
-    <link rel="icon" type="image/x-icon" href="./favicon.ico?" />
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  </head>
-  <body>
-    <main>
-      <h1>Lovely 秦沁</h1>
-      <p>You are my only one.</p>
-      <h2>我见到你，心起波澜。昨夜有繁星满天，今早有朝霞渐起。我找到你，他们才有意义。</h2>
-      <h2>每次我想你的时候，我就会在地上种一朵花，渐渐的，这里成为了一片花海。最后，我们在这片花海相拥</h2>
-      <h2>你说过，我们会结婚的</h2>
-      <h1>It's my first web!</h1>
-      <h1>我家哥哥那么努力为什么要黑他！！！！</h1>
-      <p>成功创建了一个网站，购买域名并完成了DNS解析！</p>
-      <p>加油，鸡你太美！！！</p>
-      <h2>还可以创建超文本连接，点击文字即可跳转</h2>
-      <p>See more <a target="_blank" href="https://freecatphotoapp.com">cat photos</a> in our gallery.</p>
-      <p>就连图片也可以跳转</p>
-      <a target="_blank" href="https://freecatphotoapp.com"><img  src="https://cdn.freecodecamp.org/curriculum/cat-photo-app/relaxing-cat.jpg"  alt="A cute orange cat lying on its back."></a>
-      <p>所以，你理解网络，DNS，HTTP，HTML的真正含义了吗？</p>
-      <img  src="https://img.xz7.com/up/2019-4/2019429172452875870.jpg"  title="只因你太美">
-      <H3>山无棱，天地合，乃敢与君绝！</H3>
-    </main>
-  </body>
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>多人接力故事台（演示）</title>
+  <style>
+    :root{font-family: system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;}
+    body{margin:0;padding:18px;background:#0f172a;color:#e6eef8}
+    .wrap{max-width:980px;margin:0 auto}
+    header{display:flex;gap:12px;align-items:center;margin-bottom:18px}
+    button{background:#2563eb;color:#fff;border:0;padding:8px 12px;border-radius:6px;cursor:pointer}
+    input,textarea{padding:8px;border-radius:6px;border:1px solid #334155;background:#071025;color:#eef}
+    .panel{background:#071127;padding:14px;border-radius:8px;margin-bottom:12px}
+    .tree{margin-top:12px}
+    .node{padding:8px;border-radius:6px;border:1px dashed #254; margin:6px 0}
+    .node .meta{font-size:12px;color:#9fb}
+    .controls{display:flex;gap:8px;margin-top:8px}
+    .branch{margin-left:18px;border-left:2px dashed #1f2937;padding-left:10px}
+    .highlight{background:linear-gradient(90deg,#fef08a33,#fb718533);}
+    footer{font-size:12px;color:#89a}
+    .muted{color:#89a}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h2 style="margin:0">交互式多人故事台（无账号）</h2>
+      <div class="muted">房间直接生成与导出/导入共享</div>
+    </header>
+
+    <div class="panel">
+      <div style="display:flex;gap:8px;align-items:center">
+        <button id="newRoom">创建房间</button>
+        <input id="roomId" placeholder="房间 ID（空表示新建）" />
+        <button id="joinRoom">加入房间</button>
+        <button id="export">导出状态（复制）</button>
+        <button id="importBtn">导入状态（粘贴）</button>
+      </div>
+      <div style="margin-top:8px" class="muted">当前房间：<span id="currentRoom">（未加入）</span></div>
+    </div>
+
+    <div class="panel">
+      <textarea id="editor" rows="4" style="width:100%" placeholder="写下一段，按“提交”创建新回合（默认接到选中节点下）"></textarea>
+      <div class="controls">
+        <input id="author" placeholder="署名（可留空）" style="flex:0 0 160px" />
+        <button id="submit">提交</button>
+        <button id="voteBtn">为选中节点投票</button>
+        <button id="replay">回放选中分支</button>
+        <button id="exportBranch">导出分支 JSON</button>
+      </div>
+      <div class="muted" style="margin-top:8px">提示：新房间自动生成根节点。导出可复制到他人“导入”以共享当前故事状态。</div>
+    </div>
+
+    <div class="panel">
+      <strong>故事树</strong>
+      <div id="tree" class="tree"></div>
+    </div>
+
+    <footer>演示版 · 无后端，房间与状态保存在浏览器 localStorage。使用“导出/导入”在不同设备间共享。</footer>
+  </div>
+
+<script>
+(() => {
+  // util
+  const qs = (s) => document.querySelector(s);
+  const uid = () => Math.random().toString(36).slice(2,9);
+
+  const storageKey = (room) => `storyroom:${room}`;
+
+  // default state shape: { roomId, createdAt, nodes: {id:node}, rootId }
+  function newState(roomId){
+    const rootId = 'root-'+uid();
+    const now = Date.now();
+    const nodes = {};
+    nodes[rootId] = { id: rootId, parent: null, text: '故事开始', author: '系统', ts: now, votes:0 };
+    return { roomId, createdAt: now, rootId, nodes };
+  }
+
+  // current runtime
+  let state = null;
+  let selected = null; // node id
+
+  function save(){
+    if(!state) return;
+    localStorage.setItem(storageKey(state.roomId), JSON.stringify(state));
+  }
+  function load(roomId){
+    const raw = localStorage.getItem(storageKey(roomId));
+    if(raw) return JSON.parse(raw);
+    return null;
+  }
+
+  function setRoom(roomId, fromImport){
+    state = load(roomId) || (!fromImport && newState(roomId)) || null;
+    if(!state){
+      alert('找不到房间，考虑创建新房间');
+      return;
+    }
+    qs('#currentRoom').textContent = state.roomId;
+    render();
+  }
+
+  // render tree recursively
+  function renderNode(nodeId){
+    const node = state.nodes[nodeId];
+    const el = document.createElement('div');
+    el.className = 'node';
+    if(nodeId === selected) el.classList.add('highlight');
+    const p = document.createElement('div');
+    p.textContent = node.text;
+    p.style.whiteSpace = 'pre-wrap';
+    el.appendChild(p);
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    meta.textContent = `作者：${node.author||'匿名'} · ${new Date(node.ts).toLocaleString()} · 投票：${node.votes||0}`;
+    el.appendChild(meta);
+
+    // actions
+    const actions = document.createElement('div');
+    actions.className = 'controls';
+    const selectBtn = document.createElement('button'); selectBtn.textContent='选中';
+    selectBtn.onclick = ()=>{ selected = nodeId; render(); };
+    const branchBtn = document.createElement('button'); branchBtn.textContent='在此分支下創建';
+    branchBtn.onclick = ()=>{ selected = nodeId; const txt = qs('#editor').value.trim(); if(!txt){ alert('请输入文本'); return;} submitAt(nodeId); };
+    actions.appendChild(selectBtn); actions.appendChild(branchBtn);
+    el.appendChild(actions);
+
+    // children
+    const children = Object.values(state.nodes).filter(n=>n.parent===nodeId).sort((a,b)=>a.ts-b.ts);
+    if(children.length){
+      const box = document.createElement('div'); box.className='branch';
+      children.forEach(c=> box.appendChild(renderNode(c.id)));
+      el.appendChild(box);
+    }
+    return el;
+  }
+
+  function render(){
+    const tree = qs('#tree'); tree.innerHTML='';
+    if(!state) return;
+    const rootEl = renderNode(state.rootId);
+    tree.appendChild(rootEl);
+  }
+
+  function submitAt(parentId){
+    if(!state) return alert('请先加入或创建房间');
+    const text = qs('#editor').value.trim(); if(!text) return alert('请输入文本');
+    const id = 'n-'+uid();
+    state.nodes[id] = { id, parent: parentId||selected||state.rootId, text, author: qs('#author').value.trim()||'匿名', ts: Date.now(), votes:0 };
+    qs('#editor').value='';
+    save(); render();
+  }
+
+  function voteSelected(){
+    if(!selected) return alert('请先选中节点');
+    state.nodes[selected].votes = (state.nodes[selected].votes||0)+1;
+    save(); render();
+  }
+
+  function exportState(){
+    if(!state) return alert('无状态可导出');
+    const s = JSON.stringify(state);
+    const b = btoa(unescape(encodeURIComponent(s)));
+    // copy to clipboard
+    navigator.clipboard.writeText(b).then(()=>{ alert('已复制导出字符串，可在其他设备使用“导入”粘贴。') });
+  }
+
+  function importStateStr(str){
+    try{
+      const s = decodeURIComponent(escape(atob(str)));
+      const obj = JSON.parse(s);
+      if(!obj.roomId) obj.roomId = 'imp-'+uid();
+      localStorage.setItem(storageKey(obj.roomId), JSON.stringify(obj));
+      setRoom(obj.roomId, true);
+      alert('导入成功，房间ID：'+obj.roomId);
+    }catch(e){ alert('导入失败：字符串格式错误') }
+  }
+
+  function exportBranch(){
+    if(!selected) return alert('请先选中节点');
+    // collect subtree rooted at selected
+    const collected = {};
+    function walk(id){ collected[id] = state.nodes[id]; Object.values(state.nodes).filter(n=>n.parent===id).forEach(c=>walk(c.id)); }
+    walk(selected);
+    const payload = { root: selected, nodes: collected };
+    const s = JSON.stringify(payload);
+    navigator.clipboard.writeText(btoa(unescape(encodeURIComponent(s)))).then(()=>alert('分支已复制到剪贴板（Base64）'));
+  }
+
+  async function replay(){
+    if(!selected) return alert('先选中一个节点作为分支起点');
+    // choose a single branch path by following the most-voted child iteratively
+    let cur = selected;
+    const path = [cur];
+    while(true){
+      const children = Object.values(state.nodes).filter(n=>n.parent===cur);
+      if(children.length===0) break;
+      children.sort((a,b)=>(b.votes||0)-(a.votes||0));
+      cur = children[0].id; path.push(cur);
+      if(path.length>200) break;
+    }
+    // animate
+    for(const id of path){
+      selected = id; render();
+      await new Promise(r=>setTimeout(r, 1200));
+    }
+    alert('回放结束');
+  }
+
+  // UI bindings
+  qs('#newRoom').onclick = ()=>{
+    const id = 'room-'+uid();
+    const st = newState(id);
+    localStorage.setItem(storageKey(id), JSON.stringify(st));
+    setRoom(id);
+    // copy link with room id
+    const url = location.origin + location.pathname + '#room=' + encodeURIComponent(id);
+    navigator.clipboard.writeText(url).then(()=>alert('房间创建并复制带房间ID的链接：'+id));
+  };
+  qs('#joinRoom').onclick = ()=>{
+    const id = qs('#roomId').value.trim();
+    if(!id) return alert('请输入房间 ID');
+    const loaded = load(id);
+    if(!loaded) return alert('房间未找到，本地无该房间，考虑让房间创建者导出状态并分享字符串');
+    setRoom(id);
+  };
+  qs('#submit').onclick = ()=> submitAt(selected||state&&state.rootId);
+  qs('#voteBtn').onclick = voteSelected;
+  qs('#export').onclick = exportState;
+  qs('#importBtn').onclick = ()=>{
+    const s = prompt('粘贴导出字符串（Base64）'); if(!s) return; importStateStr(s);
+  };
+  qs('#exportBranch').onclick = exportBranch;
+  qs('#replay').onclick = replay;
+
+  // try load room from URL hash
+  function initFromHash(){
+    const h = location.hash.slice(1);
+    if(!h) return;
+    const m = /room=(.+)/.exec(h);
+    if(m){ const id = decodeURIComponent(m[1]); const loaded = load(id); if(loaded) setRoom(id); else { alert('URL 中的房间在本地未找到。可联系创建者导出并导入状态。'); } }
+  }
+
+  initFromHash();
+  render();
+})();
+</script>
+</body>
 </html>
