@@ -1,0 +1,2306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>星尘编年史 - 文字冒险游戏</title>
+  <style>
+    /* ========== 全局样式 ========== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-primary: #0a0a1a;
+      --bg-secondary: #12122a;
+      --text-primary: #e0e0ff;
+      --text-secondary: #8888aa;
+      --accent: #7c5cff;
+      --accent-glow: rgba(124, 92, 255, 0.4);
+      --gold: #ffd700;
+      --danger: #ff4757;
+      --success: #2ed573;
+    }
+
+    body {
+      font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ========== 粒子背景 ========== */
+    #particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: float 15s infinite ease-in-out;
+      opacity: 0.6;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(100vh) scale(0); opacity: 0; }
+      10% { opacity: 0.6; }
+      90% { opacity: 0.6; }
+      100% { transform: translateY(-100px) scale(1); opacity: 0; }
+    }
+
+    /* ========== 容器 ========== */
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    /* ========== 标题画面 ========== */
+    #title-screen {
+      text-align: center;
+      animation: fadeIn 1s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .game-title {
+      font-size: 3rem;
+      font-weight: bold;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 0 30px var(--accent-glow);
+      animation: glow 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes glow {
+      from { filter: drop-shadow(0 0 10px var(--accent-glow)); }
+      to { filter: drop-shadow(0 0 20px var(--accent-glow)); }
+    }
+
+    .game-subtitle {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+      margin-bottom: 50px;
+      letter-spacing: 3px;
+    }
+
+    /* ========== 输入框 ========== */
+    .input-group {
+      margin-bottom: 30px;
+    }
+
+    .input-group label {
+      display: block;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+    }
+
+    .input-group input {
+      width: 100%;
+      max-width: 300px;
+      padding: 12px 20px;
+      border: 2px solid var(--accent);
+      border-radius: 8px;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-size: 1rem;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .input-group input:focus {
+      outline: none;
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+
+    /* ========== 按钮 ========== */
+    .btn {
+      padding: 14px 40px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin: 8px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #9d7cff);
+      color: white;
+      box-shadow: 0 4px 20px var(--accent-glow);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 30px var(--accent-glow);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      border: 2px solid var(--text-secondary);
+      color: var(--text-secondary);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .btn-small {
+      padding: 8px 20px;
+      font-size: 0.85rem;
+    }
+
+    /* ========== 游戏界面 ========== */
+    #game-screen {
+      display: none;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .game-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid rgba(124, 92, 255, 0.3);
+    }
+
+    .player-stats {
+      display: flex;
+      gap: 20px;
+    }
+
+    .stat {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+    }
+
+    .stat-icon {
+      font-size: 1.1rem;
+    }
+
+    .stat-value {
+      color: var(--gold);
+      font-weight: bold;
+    }
+
+    .menu-btn {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.5rem;
+      cursor: pointer;
+      transition: color 0.3s;
+    }
+
+    .menu-btn:hover {
+      color: var(--accent);
+    }
+
+    /* ========== 场景内容 ========== */
+    .scene-container {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 30px;
+      margin-bottom: 20px;
+      min-height: 200px;
+      border: 1px solid rgba(124, 92, 255, 0.2);
+    }
+
+    .scene-title {
+      color: var(--accent);
+      font-size: 1.3rem;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(124, 92, 255, 0.2);
+    }
+
+    .scene-text {
+      line-height: 1.8;
+      font-size: 1.05rem;
+      white-space: pre-wrap;
+    }
+
+    .scene-text .cursor {
+      display: inline-block;
+      width: 2px;
+      height: 1.1em;
+      background: var(--accent);
+      animation: blink 1s infinite;
+      vertical-align: text-bottom;
+    }
+
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+
+    /* ========== 选择按钮 ========== */
+    .choices-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .choice-btn {
+      width: 100%;
+      padding: 16px 24px;
+      border: 2px solid rgba(124, 92, 255, 0.3);
+      border-radius: 10px;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-size: 1rem;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    .choice-btn.visible {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .choice-btn:hover {
+      border-color: var(--accent);
+      background: rgba(124, 92, 255, 0.1);
+      transform: translateX(10px);
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+
+    .choice-btn .choice-text {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .choice-btn .choice-hint {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    /* ========== 菜单模态框 ========== */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      padding: 40px;
+      max-width: 500px;
+      width: 90%;
+      border: 1px solid var(--accent);
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .modal-title {
+      font-size: 1.5rem;
+      margin-bottom: 25px;
+      text-align: center;
+      color: var(--accent);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    /* ========== 存档槽位 ========== */
+    .save-slot {
+      background: var(--bg-primary);
+      border: 2px solid transparent;
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .save-slot:hover {
+      border-color: var(--accent);
+    }
+
+    .save-slot.empty {
+      opacity: 0.5;
+      border-style: dashed;
+    }
+
+    .save-slot-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .save-slot-title {
+      font-weight: bold;
+    }
+
+    .save-slot-date {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .save-slot-info {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    /* ========== 成就通知 ========== */
+    .achievement-toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: linear-gradient(135deg, var(--bg-secondary), var(--bg-primary));
+      border: 2px solid var(--gold);
+      border-radius: 12px;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: slideInRight 0.5s ease, fadeOut 0.5s ease 3s forwards;
+      z-index: 200;
+    }
+
+    @keyframes slideInRight {
+      from { transform: translateX(100px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    @keyframes fadeOut {
+      to { opacity: 0; transform: translateX(100px); }
+    }
+
+    .achievement-icon {
+      font-size: 2rem;
+    }
+
+    .achievement-text {
+      font-size: 0.9rem;
+    }
+
+    .achievement-text small {
+      display: block;
+      color: var(--gold);
+      font-weight: bold;
+      margin-bottom: 2px;
+    }
+
+    /* ========== 响应式 ========== */
+    @media (max-width: 600px) {
+      .game-title { font-size: 2rem; }
+      .container { padding: 15px; }
+      .scene-container { padding: 20px; }
+      .player-stats { gap: 12px; }
+      .stat { font-size: 0.75rem; }
+      .choice-btn { padding: 14px 18px; font-size: 0.95rem; }
+    }
+
+    /* ========== 工具类 ========== */
+    .hidden { display: none !important; }
+    .text-center { text-align: center; }
+    .mt-20 { margin-top: 20px; }
+    .mb-20 { margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+  <!-- 粒子背景 -->
+  <div id="particles"></div>
+
+  <!-- 标题画面 -->
+  <div class="container" id="title-screen">
+    <h1 class="game-title">星尘编年史</h1>
+    <p class="game-subtitle">— 记忆编织者的旅程 —</p>
+
+    <div class="input-group">
+      <label for="player-name">为你的角色命名</label>
+      <input type="text" id="player-name" placeholder="输入名字..." maxlength="10" value="旅行者">
+    </div>
+
+    <div>
+      <button class="btn btn-primary" onclick="startGame()">开始旅程</button>
+    </div>
+    <div class="mt-20">
+      <button class="btn btn-secondary" onclick="showLoadModal()">继续旅程</button>
+    </div>
+  </div>
+
+  <!-- 游戏主界面 -->
+  <div class="container" id="game-screen">
+    <div class="game-header">
+      <div class="player-stats">
+        <div class="stat">
+          <span class="stat-icon">🧠</span>
+          <span>智慧:</span>
+          <span class="stat-value" id="stat-wisdom">5</span>
+        </div>
+        <div class="stat">
+          <span class="stat-icon">⚔️</span>
+          <span>勇气:</span>
+          <span class="stat-value" id="stat-courage">5</span>
+        </div>
+        <div class="stat">
+          <span class="stat-icon">💜</span>
+          <span>同理心:</span>
+          <span class="stat-value" id="stat-empathy">5</span>
+        </div>
+      </div>
+      <button class="menu-btn" onclick="showMenu()">☰</button>
+    </div>
+
+    <div class="scene-container">
+      <h2 class="scene-title" id="scene-title">序章</h2>
+      <div class="scene-text" id="scene-text"></div>
+    </div>
+
+    <div class="choices-container" id="choices-container"></div>
+  </div>
+
+  <!-- 菜单模态框 -->
+  <div class="modal" id="menu-modal">
+    <div class="modal-content">
+      <h3 class="modal-title">游戏菜单</h3>
+      <div class="text-center">
+        <button class="btn btn-primary btn-small" onclick="showSaveModal()">保存游戏</button>
+        <button class="btn btn-primary btn-small" onclick="showLoadModal()">读取存档</button>
+        <button class="btn btn-secondary btn-small" onclick="showAchievements()">成就</button>
+        <button class="btn btn-secondary btn-small" onclick="exportSave()">导出存档</button>
+        <button class="btn btn-secondary btn-small" onclick="importSave()">导入存档</button>
+        <button class="btn btn-secondary btn-small" onclick="returnToTitle()">返回标题</button>
+        <button class="btn btn-secondary btn-small" onclick="closeModals()">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 存档模态框 -->
+  <div class="modal" id="save-modal">
+    <div class="modal-content">
+      <h3 class="modal-title" id="save-modal-title">保存游戏</h3>
+      <div id="save-slots"></div>
+      <div class="text-center mt-20">
+        <button class="btn btn-secondary btn-small" onclick="closeModals()">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 成就模态框 -->
+  <div class="modal" id="achievement-modal">
+    <div class="modal-content">
+      <h3 class="modal-title">成就收集</h3>
+      <div id="achievement-list"></div>
+      <div class="text-center mt-20">
+        <button class="btn btn-secondary btn-small" onclick="closeModals()">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ========== 游戏引擎核心 ==========
+    class GameEngine {
+      constructor() {
+        this.currentScene = 'start';
+        this.player = {
+          name: '旅行者',
+          stats: { wisdom: 5, courage: 5, empathy: 5 },
+          inventory: [],
+          flags: {},
+          relationships: {}
+        };
+        this.history = [];
+        this.achievements = this.loadAchievements();
+        this.isTyping = false;
+        this.typewriterTimeout = null;
+      }
+
+      // 修改属性
+      modifyStat(stat, amount) {
+        if (this.player.stats[stat] !== undefined) {
+          this.player.stats[stat] = Math.max(0, Math.min(20, this.player.stats[stat] + amount));
+          this.updateStatsDisplay();
+        }
+      }
+
+      // 设置标记
+      setFlag(flag, value = true) {
+        this.player.flags[flag] = value;
+      }
+
+      // 检查条件
+      checkCondition(condition) {
+        if (!condition) return true;
+        if (condition.minStat) {
+          for (const [stat, value] of Object.entries(condition.minStat)) {
+            if (this.player.stats[stat] < value) return false;
+          }
+        }
+        if (condition.hasFlag) {
+          for (const flag of condition.hasFlag) {
+            if (!this.player.flags[flag]) return false;
+          }
+        }
+        if (condition.notFlag) {
+          for (const flag of condition.notFlag) {
+            if (this.player.flags[flag]) return false;
+          }
+        }
+        return true;
+      }
+
+      // 应用效果
+      applyEffects(effects) {
+        if (!effects) return;
+        if (effects.wisdom) this.modifyStat('wisdom', effects.wisdom);
+        if (effects.courage) this.modifyStat('courage', effects.courage);
+        if (effects.empathy) this.modifyStat('empathy', effects.empathy);
+        if (effects.flags) {
+          Object.entries(effects.flags).forEach(([flag, value]) => {
+            this.setFlag(flag, value);
+          });
+        }
+        if (effects.achievement) {
+          this.unlockAchievement(effects.achievement);
+        }
+      }
+
+      // 更新属性显示
+      updateStatsDisplay() {
+        document.getElementById('stat-wisdom').textContent = this.player.stats.wisdom;
+        document.getElementById('stat-courage').textContent = this.player.stats.courage;
+        document.getElementById('stat-empathy').textContent = this.player.stats.empathy;
+      }
+
+      // 解锁成就
+      unlockAchievement(id) {
+        if (!this.achievements.includes(id)) {
+          this.achievements.push(id);
+          localStorage.setItem('stardust_achievements', JSON.stringify(this.achievements));
+          showAchievementToast(id);
+        }
+      }
+
+      // 加载成就
+      loadAchievements() {
+        const saved = localStorage.getItem('stardust_achievements');
+        return saved ? JSON.parse(saved) : [];
+      }
+
+      // 保存游戏
+      saveGame(slot) {
+        const saveData = {
+          scene: this.currentScene,
+          player: JSON.parse(JSON.stringify(this.player)),
+          history: [...this.history],
+          timestamp: new Date().toLocaleString('zh-CN'),
+          chapter: STORY.scenes[this.currentScene]?.title || '未知'
+        };
+        localStorage.setItem(`stardust_save_${slot}`, JSON.stringify(saveData));
+        return saveData;
+      }
+
+      // 加载游戏
+      loadGame(slot) {
+        const saved = localStorage.getItem(`stardust_save_${slot}`);
+        if (saved) {
+          const data = JSON.parse(saved);
+          this.currentScene = data.scene;
+          this.player = data.player;
+          this.history = data.history || [];
+          this.updateStatsDisplay();
+          this.loadScene(this.currentScene);
+          return true;
+        }
+        return false;
+      }
+
+      // 导出存档
+      exportData() {
+        return btoa(JSON.stringify({
+          scene: this.currentScene,
+          player: this.player,
+          history: this.history,
+          achievements: this.achievements
+        }));
+      }
+
+      // 导入存档
+      importData(data) {
+        try {
+          const decoded = JSON.parse(atob(data));
+          this.currentScene = decoded.scene;
+          this.player = decoded.player;
+          this.history = decoded.history || [];
+          this.achievements = decoded.achievements || [];
+          localStorage.setItem('stardust_achievements', JSON.stringify(this.achievements));
+          this.updateStatsDisplay();
+          this.loadScene(this.currentScene);
+          return true;
+        } catch (e) {
+          return false;
+        }
+      }
+
+      // 加载场景
+      async loadScene(sceneId) {
+        const scene = STORY.scenes[sceneId];
+        if (!scene) {
+          console.error('Scene not found:', sceneId);
+          return;
+        }
+
+        this.currentScene = sceneId;
+        this.history.push(sceneId);
+
+        // 检查场景前置条件
+        if (scene.condition && !this.checkCondition(scene.condition)) {
+          this.loadScene(scene.fallback || 'default');
+          return;
+        }
+
+        // 应用场景效果
+        if (scene.effects) {
+          this.applyEffects(scene.effects);
+        }
+
+        // 渲染场景
+        await ui.renderScene(scene);
+      }
+
+      // 做出选择
+      async makeChoice(choiceIndex) {
+        const scene = STORY.scenes[this.currentScene];
+        if (!scene || !scene.choices[choiceIndex]) return;
+
+        const choice = scene.choices[choiceIndex];
+
+        // 检查选择条件
+        if (!this.checkCondition(choice.condition)) {
+          return;
+        }
+
+        // 应用选择效果
+        this.applyEffects(choice.effects);
+
+        // 跳转到下一场景
+        if (choice.next) {
+          this.loadScene(choice.next);
+        }
+      }
+    }
+
+    // ========== 故事数据 ==========
+    const STORY = {
+      scenes: {
+        // ===== 序章 =====
+        'start': {
+          title: '序章：觉醒',
+          text: `你缓缓睁开眼睛，映入眼帘的是一片陌生的天花板。
+
+空气中弥漫着淡淡的星尘气息，墙壁上闪烁着微弱的符文光芒。你感觉到一股温暖的力量在体内流动，仿佛有什么东西正在苏醒。
+
+"你终于醒了。"
+
+一个声音从房间的角落传来。你转头看去，只见一位白发老者正坐在窗边，窗外是漫天的星辰。
+
+"我是长老艾尔文，这里是星尘圣殿。你...是被选中的人。"`,
+          choices: [
+            {
+              text: '"被选中？什么意思？"',
+              hint: '了解更多 [智慧+1]',
+              next: 'explain',
+              effects: { wisdom: 1 }
+            },
+            {
+              text: '警惕地后退，保持距离',
+              hint: '保持谨慎 [勇气+1]',
+              next: 'cautious',
+              effects: { courage: 1 }
+            },
+            {
+              text: '感受体内的力量，尝试引导它',
+              hint: '探索力量 [同理心+1]',
+              next: 'feel_power',
+              effects: { empathy: 1 }
+            }
+          ]
+        },
+
+        'explain': {
+          title: '序章：觉醒',
+          text: `艾尔文长老叹了口气，缓缓站起身来。
+
+"这个世界正在崩塌。记忆碎片散落在各个角落，黑暗正在吞噬一切。而你...是唯一能够编织记忆、修复世界线的人。"
+
+他走到窗边，指着远方一片黑暗的区域。
+
+"那里，曾经是最繁华的城市。现在...只剩下无尽的虚空。"
+
+"你需要穿越不同的记忆碎片，收集星尘，修复这个世界的裂痕。但要小心...每一段记忆都有它的守护者。"`,
+          choices: [
+            {
+              text: '"我愿意承担这个使命。"',
+              hint: '接受命运 [勇气+1]',
+              next: 'accept_mission',
+              effects: { courage: 1, flags: { accepted: true } }
+            },
+            {
+              text: '"我需要更多时间考虑。"',
+              hint: '谨慎思考 [智慧+1]',
+              next: 'think_more',
+              effects: { wisdom: 1 }
+            }
+          ]
+        },
+
+        'cautious': {
+          title: '序章：觉醒',
+          text: `你警惕地后退了几步，目光紧盯着眼前的老人。
+
+艾尔文长老并没有生气，反而露出了欣慰的笑容。
+
+"很好...保持警惕是明智的。在这个世界里，不是所有看似友善的面孔都值得信任。"
+
+他举起双手，示意自己没有恶意。
+
+"但请相信我，我等你已经等了很久。外面的世界...已经等不了太久了。"`,
+          choices: [
+            {
+              text: '"告诉我更多关于这个世界的事。"',
+              hint: '获取情报 [智慧+1]',
+              next: 'explain',
+              effects: { wisdom: 1 }
+            },
+            {
+              text: '"给我看看证据。"',
+              hint: '要求证据 [勇气+1]',
+              next: 'demand_proof',
+              effects: { courage: 1 }
+            }
+          ]
+        },
+
+        'feel_power': {
+          title: '序章：觉醒',
+          text: `你闭上眼睛，感受着体内那股陌生的力量。
+
+起初，它像是一条温暖的小溪，缓缓流淌。渐渐地，你感觉到它与周围的星尘产生了共鸣。房间里的符文开始发光，整个圣殿都在轻轻颤动。
+
+"这...这不可能！"艾尔文长老惊讶地站了起来。"你竟然能直接与星尘共鸣？这是千年来第一次..."
+
+他快步走到你面前，眼中闪烁着激动的泪光。
+
+"命运的齿轮...终于开始转动了。"`,
+          effects: { flags: { resonance: true } },
+          choices: [
+            {
+              text: '"这股力量...我该如何控制它？"',
+              hint: '学习控制 [智慧+1]',
+              next: 'learn_control',
+              effects: { wisdom: 1, achievement: 'first_resonance' }
+            },
+            {
+              text: '"让我用这力量帮助别人。"',
+              hint: '帮助他人 [同理心+1]',
+              next: 'help_others_intro',
+              effects: { empathy: 1, achievement: 'first_resonance' }
+            }
+          ]
+        },
+
+        // ===== 第一章 =====
+        'accept_mission': {
+          title: '第一章：启程',
+          text: `艾尔文长老点了点头，从怀中取出一枚闪烁着星光的徽章。
+
+"这是星尘编织者的徽章，它会在你需要的时候指引方向。"
+
+他将徽章交到你手中，你感觉到一股温暖的力量流入体内。
+
+"第一块记忆碎片就在圣殿外的遗忘森林中。那里曾经是一个繁华的村庄，但现在...只剩下残破的记忆。"
+
+"去吧，年轻的编织者。记住，每一个选择都会影响世界的走向。"`,
+          effects: { flags: { has_badge: true } },
+          choices: [
+            {
+              text: '前往遗忘森林',
+              hint: '开始冒险',
+              next: 'forgetful_forest_entrance'
+            }
+          ]
+        },
+
+        'think_more': {
+          title: '第一章：启程',
+          text: `艾尔文长老静静地看着你，似乎在等待你的决定。
+
+"时间...确实应该好好想想。但恐怕我们没有太多时间了。"
+
+他走到书架前，取出一本古老的书籍。
+
+"这是《星尘编年史》，记录了这个世界的历史，也记录了...你的命运。"
+
+"看完它，或许你会做出决定。但请记住，外面的黑暗不会等待。"`,
+          choices: [
+            {
+              text: '翻阅《星尘编年史》',
+              hint: '研究历史 [智慧+2]',
+              next: 'read_chronicle',
+              effects: { wisdom: 2, flags: { read_book: true } }
+            },
+            {
+              text: '直接出发，边走边想',
+              hint: '立即行动 [勇气+1]',
+              next: 'accept_mission',
+              effects: { courage: 1 }
+            }
+          ]
+        },
+
+        'demand_proof': {
+          title: '第一章：启程',
+          text: `艾尔文长老沉默了片刻，然后点了点头。
+
+"合理的怀疑。"
+
+他挥了挥手，房间的墙壁突然变得透明。你看到了外面的世界——
+
+天空中布满了裂痕，大地支离破碎。远处的城市正在崩塌，黑色的雾气吞噬着一切。
+
+"这...这是真的？"你震惊地问道。
+
+"千真万确。而你...是唯一的希望。"`,
+          effects: { flags: { saw_truth: true } },
+          choices: [
+            {
+              text: '"我相信你。让我出发吧。"',
+              hint: '接受使命 [勇气+2]',
+              next: 'accept_mission',
+              effects: { courage: 2 }
+            }
+          ]
+        },
+
+        'learn_control': {
+          title: '第一章：启程',
+          text: `艾尔文长老开始教导你如何控制这股力量。
+
+"星尘之力源于记忆，而记忆是情感的载体。你需要学会聆听...不仅是自己的记忆，还有他人的。"
+
+经过几个小时的练习，你已经能够初步控制这股力量。
+
+"很好...你比我想象的更有天赋。"艾尔文长老微笑着说。"现在，是时候出发了。第一块记忆碎片...就在遗忘森林中。"`,
+          effects: { flags: { has_badge: true, trained: true } },
+          choices: [
+            {
+              text: '前往遗忘森林',
+              hint: '开始冒险',
+              next: 'forgetful_forest_entrance'
+            }
+          ]
+        },
+
+        'help_others_intro': {
+          title: '第一章：启程',
+          text: `艾尔文长老看着你，眼中闪烁着赞许的光芒。
+
+"善良的心...这是编织者最珍贵的品质。"
+
+他递给你一枚徽章。
+
+"去吧，用你的力量帮助那些迷失在记忆碎片中的人。遗忘森林...那里有需要你帮助的灵魂。"`,
+          effects: { flags: { has_badge: true, kind_heart: true } },
+          choices: [
+            {
+              text: '前往遗忘森林',
+              hint: '帮助他人',
+              next: 'forgetful_forest_entrance'
+            }
+          ]
+        },
+
+        'read_chronicle': {
+          title: '第一章：启程',
+          text: `你翻开《星尘编年史》，里面记载着这个世界的历史...
+
+千年前，星尘之力维持着世界的平衡。但一场大战撕裂了时空，记忆碎片散落各处，黑暗开始蔓延。
+
+"编织者"是唯一能够修复这一切的人。而你...是最后的编织者。
+
+合上书本，你的眼神变得坚定。
+
+"我准备好了。"`,
+          effects: { wisdom: 1 },
+          choices: [
+            {
+              text: '前往遗忘森林',
+              hint: '开始冒险',
+              next: 'forgetful_forest_entrance'
+            }
+          ]
+        },
+
+        // ===== 遗忘森林 =====
+        'forgetful_forest_entrance': {
+          title: '遗忘森林',
+          text: `你站在遗忘森林的入口。
+
+这片森林曾经是如此美丽，但现在...树木枯萎，空气中弥漫着悲伤的气息。偶尔能看到一些模糊的身影在林间飘荡——那是被困在记忆碎片中的灵魂。
+
+徽章在你胸前微微发光，指引着你前进的方向。
+
+突然，你听到前方传来微弱的啜泣声...`,
+          choices: [
+            {
+              text: '循着声音走去',
+              hint: '调查声音 [同理心+1]',
+              next: 'find_child',
+              effects: { empathy: 1 }
+            },
+            {
+              text: '保持警惕，继续前进',
+              hint: '专注目标 [智慧+1]',
+              next: 'continue_path',
+              effects: { wisdom: 1 }
+            },
+            {
+              text: '绕道而行',
+              hint: '避开危险 [勇气+1]',
+              next: 'detour',
+              effects: { courage: 1 }
+            }
+          ]
+        },
+
+        'find_child': {
+          title: '遗忘森林',
+          text: `你循着声音走去，在一棵枯树下发现了一个小女孩的身影。
+
+她看起来只有七八岁，正抱着一只破旧的布偶哭泣。
+
+"姐姐...哥哥..."她看到你，眼中闪过一丝希望，但很快又暗淡下去。"你们去哪了...为什么丢下小雨一个人..."
+
+你注意到她的身体有些透明——她是一个记忆碎片中的灵魂。
+
+"你好...你是谁？你能看到小雨吗？"`,
+          choices: [
+            {
+              text: '"我能看到你。告诉我，发生了什么？"',
+              hint: '温柔询问 [同理心+2]',
+              next: 'help_child_talk',
+              effects: { empathy: 2 }
+            },
+            {
+              text: '"你是记忆碎片中的灵魂吗？"',
+              hint: '理性分析 [智慧+1]',
+              next: 'help_child_analyze',
+              effects: { wisdom: 1 }
+            },
+            {
+              text: '"我来帮你找到你的家人。"',
+              hint: '直接帮助 [勇气+1]',
+              next: 'help_child_direct',
+              effects: { courage: 1, flags: { promised_child: true } }
+            }
+          ]
+        },
+
+        'help_child_talk': {
+          title: '遗忘森林',
+          text: `小雨看着你，眼中渐渐有了光彩。
+
+"真的吗？你能听到小雨说话？"
+
+她擦了擦眼泪，断断续续地讲述着自己的故事。
+
+"小雨和姐姐哥哥走散了...这里有好多好多黑黑的东西，好可怕。小雨一直在等，但是等了好久好久..."
+
+"大哥哥/大姐姐，你能帮小雨找到姐姐吗？姐姐说，只要找到那颗最亮的星星，就能回家了..."`,
+          choices: [
+            {
+              text: '"我会帮你找到姐姐的。"',
+              hint: '接受请求 [同理心+1]',
+              next: 'accept_child_quest',
+              effects: { empathy: 1, flags: { child_quest: true } }
+            },
+            {
+              text: '"那颗最亮的星星是什么？"',
+              hint: '获取线索 [智慧+1]',
+              next: 'ask_about_star',
+              effects: { wisdom: 1, flags: { child_quest: true } }
+            }
+          ]
+        },
+
+        'help_child_analyze': {
+          title: '遗忘森林',
+          text: `小雨歪着头看着你。
+
+"记忆...碎片？小雨不懂..."
+
+她举起手中的布偶。
+
+"这是姐姐给小雨的...姐姐说，只要紧紧抱着它，就不会忘记回家的路。"
+
+你注意到布偶上闪烁着微弱的光芒——那是一小块星尘碎片。
+
+"大哥哥/大姐姐，你能帮小雨找到姐姐吗？"`,
+          choices: [
+            {
+              text: '"我会帮你的。带我去你最后见到姐姐的地方。"',
+              hint: '开始调查 [智慧+1]',
+              next: 'accept_child_quest',
+              effects: { wisdom: 1, flags: { child_quest: true } }
+            }
+          ]
+        },
+
+        'help_child_direct': {
+          title: '遗忘森林',
+          text: `小雨的眼睛亮了起来。
+
+"真的吗？大哥哥/大姐姐最好了！"
+
+她跳了起来，拉着你的手。
+
+"姐姐往那边走了！我们快去找她！"
+
+虽然你不知道能不能信任一个记忆碎片中的灵魂，但看到她期待的眼神，你决定帮助她。`,
+          effects: { flags: { child_quest: true } },
+          choices: [
+            {
+              text: '跟着小雨走',
+              hint: '帮助小雨',
+              next: 'follow_child'
+            }
+          ]
+        },
+
+        'accept_child_quest': {
+          title: '遗忘森林',
+          text: `小雨高兴地跳了起来。
+
+"太好了！大哥哥/大姐姐最好了！"
+
+她拉着你的手，指向森林深处。
+
+"姐姐往那边走了...但是那里好黑好黑，小雨不敢去..."
+
+"大哥哥/大姐姐，你能陪小雨一起去吗？"`,
+          choices: [
+            {
+              text: '"走吧，我们一起去找你姐姐。"',
+              hint: '结伴同行',
+              next: 'follow_child'
+            }
+          ]
+        },
+
+        'ask_about_star': {
+          title: '遗忘森林',
+          text: `小雨歪着头想了想。
+
+"姐姐说...那颗星星藏在最黑最黑的地方，但是它会发光，很亮很亮的光。"
+
+"姐姐还说...只有勇敢的人才能找到它。"
+
+她看着你，眼中满是期待。
+
+"大哥哥/大姐姐，你勇敢吗？"`,
+          choices: [
+            {
+              text: '"我会努力变勇敢的。走吧，去找你姐姐。"',
+              hint: '结伴同行',
+              next: 'follow_child',
+              effects: { courage: 1 }
+            }
+          ]
+        },
+
+        'follow_child': {
+          title: '遗忘森林深处',
+          text: `你跟着小雨穿过迷雾重重的森林。
+
+一路上，你能看到更多模糊的灵魂在林间游荡。他们的表情或是迷茫，或是悲伤，仿佛在寻找着什么却永远找不到。
+
+"姐姐说，他们都是忘记了回家路的人..."小雨小声说。
+
+突然，前方出现了一个岔路口。左边的路被浓雾笼罩，隐约能看到一些微弱的光芒；右边的路更加黑暗，但似乎有什么东西在闪烁。
+
+"姐姐...好像往右边走了..."小雨有些害怕地说。`,
+          choices: [
+            {
+              text: '走右边，追上小雨的姐姐',
+              hint: '跟随线索 [勇气+1]',
+              next: 'right_path',
+              effects: { courage: 1 }
+            },
+            {
+              text: '先去左边看看那些光芒',
+              hint: '探索未知 [智慧+1]',
+              next: 'left_path',
+              effects: { wisdom: 1 }
+            },
+            {
+              text: '两个方向都太危险，先原地休息',
+              hint: '谨慎行事 [同理心+1]',
+              next: 'rest_point',
+              effects: { empathy: 1 }
+            }
+          ]
+        },
+
+        'continue_path': {
+          title: '遗忘森林',
+          text: `你决定忽略那声音，继续前进。
+
+徽章指引着你来到森林深处的一片空地。这里有一棵巨大的古树，树干上刻满了符文。在树根处，你看到了一块闪烁着微光的石头——那应该就是第一块记忆碎片。
+
+但就在你准备靠近时，一个声音响起：
+
+"停下！那是我的！"`,
+          choices: [
+            {
+              text: '"你是谁？出来！"',
+              hint: '正面应对 [勇气+1]',
+              next: 'confront_guardian',
+              effects: { courage: 1 }
+            },
+            {
+              text: '保持冷静，观察周围',
+              hint: '观察环境 [智慧+1]',
+              next: 'observe_guardian',
+              effects: { wisdom: 1 }
+            }
+          ]
+        },
+
+        'detour': {
+          title: '遗忘森林',
+          text: `你决定绕开那声音，选择了一条看起来更安全的小路。
+
+走了一段路后，你发现前方有一个简陋的营地。一个身穿斗篷的人正坐在篝火旁，似乎在等待什么。
+
+他看到你，站起身来。
+
+"又一个迷途的旅人？"他的声音沙哑而沧桑。"这片森林...不是你该来的地方。"`,
+          choices: [
+            {
+              text: '"我是来寻找记忆碎片的。"',
+              hint: '坦诚相告 [同理心+1]',
+              next: 'meet_wanderer',
+              effects: { empathy: 1 }
+            },
+            {
+              text: '"你是谁？为什么在这里？"',
+              hint: '询问信息 [智慧+1]',
+              next: 'ask_wanderer',
+              effects: { wisdom: 1 }
+            },
+            {
+              text: '绕过他继续前进',
+              hint: '保持警惕',
+              next: 'forgetful_forest_deep'
+            }
+          ]
+        },
+
+        // ===== 分支场景 =====
+        'right_path': {
+          title: '黑暗小径',
+          text: `你牵着小雨的手，走进了右边的黑暗小径。
+
+四周的雾气越来越浓，你几乎看不清前方的路。小雨紧紧地抓着你的手，身体微微颤抖。
+
+"大哥哥/大姐姐...小雨好害怕..."
+
+突然，前方出现了一个身影——那是一个年轻女子，她的面容与小雨有几分相似。
+
+"小雨？是你吗？"那个身影转过身来，眼中满是惊喜。"姐姐终于找到你了！"`,
+          choices: [
+            {
+              text: '让姐妹团聚',
+              hint: '帮助她们 [同理心+2]',
+              next: 'sisters_reunite',
+              effects: { empathy: 2, achievement: 'helper_of_lost' }
+            },
+            {
+              text: '"等等...你是真实存在的吗？"',
+              hint: '保持理性 [智慧+1]',
+              next: 'question_sister',
+              effects: { wisdom: 1 }
+            }
+          ]
+        },
+
+        'left_path': {
+          title: '微光小径',
+          text: `你走向左边的小径，那里有一些微弱的光芒在闪烁。
+
+走近后，你发现那是一些萤火虫——不，是更小的星尘碎片。它们围绕着一块古老的石碑飞舞。
+
+石碑上刻着一段文字：
+
+"当记忆消散，当灵魂迷失，
+唯有编织者的手，能重织命运之线。
+但请记住...每一次编织，都要付出代价。"
+
+你感觉到徽章在发热，似乎在回应这段文字。`,
+          effects: { flags: { found碑文: true } },
+          choices: [
+            {
+              text: '触摸石碑',
+              hint: '探索力量 [勇气+1]',
+              next: 'touch_stele',
+              effects: { courage: 1 }
+            },
+            {
+              text: '记录下这段文字，继续前进',
+              hint: '保存信息 [智慧+1]',
+              next: 'record_text',
+              effects: { wisdom: 1 }
+            }
+          ]
+        },
+
+        'rest_point': {
+          title: '森林空地',
+          text: `你决定先在原地休息一下。
+
+小雨坐在你身边，虽然还是有些害怕，但看到你冷静的样子，也渐渐放松下来。
+
+"大哥哥/大姐姐...你累了吗？"
+
+你摇了摇头，开始整理思绪。这片森林比你想象的更加复杂，你需要想清楚下一步该怎么走。
+
+就在这时，你听到远处传来微弱的歌声...`,
+          choices: [
+            {
+              text: '仔细聆听歌声',
+              hint: '感受旋律 [同理心+1]',
+              next: 'listen_song',
+              effects: { empathy: 1 }
+            },
+            {
+              text: '歌声可能是陷阱，继续前进',
+              hint: '保持警惕 [勇气+1]',
+              next: 'forgetful_forest_deep',
+              effects: { courage: 1 }
+            }
+          ]
+        },
+
+        // ===== 更多场景 =====
+        'confront_guardian': {
+          title: '记忆守护者',
+          text: `你警惕地环顾四周，准备应对可能出现的敌人。
+
+一个身影从树后走出——那是一个高大的人形生物，身体由闪烁的记忆碎片组成。
+
+"我是这片森林的守护者，"它说，"你想要这块记忆碎片？可以...但你需要通过我的考验。"
+
+"什么考验？"你问道。
+
+"证明你值得拥有它。告诉我...你最珍贵的记忆是什么？"`,
+          choices: [
+            {
+              text: '分享你最珍贵的记忆',
+              hint: '真诚分享 [同理心+2]',
+              next: 'share_memory',
+              effects: { empathy: 2 }
+            },
+            {
+              text: '"记忆不应该被用来考验别人。"',
+              hint: '反驳 [智慧+1]',
+              next: 'challenge_guardian',
+              effects: { wisdom: 1 }
+            },
+            {
+              text: '直接动手抢夺碎片',
+              hint: '强硬态度 [勇气+2]',
+              next: 'fight_guardian',
+              effects: { courage: 2 }
+            }
+          ]
+        },
+
+        'observe_guardian': {
+          title: '记忆守护者',
+          text: `你保持冷静，仔细观察着周围的情况。
+
+你注意到那棵古树上的符文在微微发光，树根处的记忆碎片也在闪烁。那个声音似乎来自树的另一侧。
+
+你悄悄绕到另一边，看到一个由记忆碎片组成的身影正守在那里。
+
+它似乎并没有注意到你...`,
+          choices: [
+            {
+              text: '趁机接近记忆碎片',
+              hint: '智慧行动 [智慧+1]',
+              next: 'sneak_approach',
+              effects: { wisdom: 1 }
+            },
+            {
+              text: '主动现身，表明来意',
+              hint: '光明正大 [勇气+1]',
+              next: 'confront_guardian',
+              effects: { courage: 1 }
+            }
+          ]
+        },
+
+        'meet_wanderer': {
+          title: '森林流浪者',
+          text: `流浪者听到你的话，沉默了片刻。
+
+"记忆碎片..."他苦笑一声。"我曾经也是为了寻找它而来到这里的人。"
+
+"那你找到了吗？"你问道。
+
+"找到了...但也失去了更多。"他看着你，眼中满是沧桑。"年轻人，有时候...不知道真相，反而是一种幸福。"`,
+          choices: [
+            {
+              text: '"发生了什么？告诉我。"',
+              hint: '倾听故事 [同理心+1]',
+              next: 'wanderer_story',
+              effects: { empathy: 1 }
+            },
+            {
+              text: '"我不怕失去。我要继续前进。"',
+              hint: '坚定决心 [勇气+1]',
+              next: 'forgetful_forest_deep',
+              effects: { courage: 1 }
+            }
+          ]
+        },
+
+        'ask_wanderer': {
+          title: '森林流浪者',
+          text: `流浪者看着你，眼中闪过一丝警惕。
+
+"我？我只是个迷路的人罢了。"他顿了顿。"这片森林...会吞噬那些不够小心的人。"
+
+"你最好快点离开，在天黑之前。否则...你会变成像他们一样的存在。"
+
+他指向森林深处那些飘荡的灵魂。`,
+          choices: [
+            {
+              text: '"你似乎知道很多。能告诉我更多吗？"',
+              hint: '获取信息 [智慧+1]',
+              next: 'wanderer_story',
+              effects: { wisdom: 1 }
+            },
+            {
+              text: '"谢谢你提醒。我该走了。"',
+              hint: '继续前进',
+              next: 'forgetful_forest_deep'
+            }
+          ]
+        },
+
+        // ===== 中期场景 =====
+        'forgetful_forest_deep': {
+          title: '遗忘森林深处',
+          text: `你继续深入森林，周围的景象变得越来越诡异。
+
+枯死的树木排列成诡异的形状，空气中弥漫着悲伤的气息。你偶尔能看到一些记忆碎片在空中飘荡，但它们都太小了，不值得收集。
+
+突然，你来到了一片开阔地。在空地中央，有一座破旧的小屋。屋门半掩着，里面似乎有什么东西在发光。
+
+徽章在你胸前剧烈地跳动着...`,
+          choices: [
+            {
+              text: '进入小屋',
+              hint: '探索小屋 [勇气+1]',
+              next: 'enter_cabin',
+              effects: { courage: 1 }
+            },
+            {
+              text: '先在周围侦察一下',
+              hint: '谨慎行事 [智慧+1]',
+              next: 'scout_cabin',
+              effects: { wisdom: 1 }
+            }
+          ]
+        },
+
+        'enter_cabin': {
+          title: '记忆小屋',
+          text: `你推开门，走进了小屋。
+
+屋内布满了灰尘，但墙壁上挂满了照片——或者说，是记忆碎片形成的影像。你看到了一个幸福的家庭，父母和两个孩子...
+
+突然，你注意到角落里有一个发光的物体。走近一看，那是一块完整的记忆碎片，比你在外面看到的都要大。
+
+但就在你准备拿起它时，一个声音响起：
+
+"不要碰它！"`,
+          choices: [
+            {
+              text: '迅速拿起碎片',
+              hint: '果断行动 [勇气+2]',
+              next: 'grab_fragment',
+              effects: { courage: 2 }
+            },
+            {
+              text: '停手，寻找声音的来源',
+              hint: '谨慎 [智慧+1]',
+              next: 'find_voice_source',
+              effects: { wisdom: 1 }
+            }
+          ]
+        },
+
+        'scout_cabin': {
+          title: '记忆小屋',
+          text: `你没有贸然进入，而是在小屋周围侦察了一圈。
+
+你发现小屋的窗户破了一个洞，从那里可以看到屋内的情况。屋内有一个发光的物体，应该就是记忆碎片。
+
+但你也注意到了一些异常——小屋周围的地面上有一些奇怪的痕迹，像是有什么东西经常出入。
+
+这时，你听到屋内传来微弱的对话声...`,
+          choices: [
+            {
+              text: '靠近窗户偷听',
+              hint: '收集情报 [智慧+2]',
+              next: 'eavesdrop',
+              effects: { wisdom: 2 }
+            },
+            {
+              text: '直接进入小屋',
+              hint: '直面情况 [勇气+1]',
+              next: 'enter_cabin',
+              effects: { courage: 1 }
+            }
+          ]
+        },
+
+        // ===== 分支结局场景 =====
+        'sisters_reunite': {
+          title: '姐妹团聚',
+          text: `姐妹俩相拥而泣，整个空间都被温暖的光芒包围。
+
+"谢谢你..."姐姐转过身来，向你鞠了一躬。"你帮助我们重聚...这是我们一直以来的愿望。"
+
+"作为感谢..."她从怀中取出一块闪烁着光芒的碎片。"这是星尘碎片，它会帮助你继续前进。"
+
+小雨拉着你的手。
+
+"大哥哥/大姐姐，你要走了吗？"`,
+          effects: { flags: { has_first_fragment: true }, achievement: 'sisters_reunited' },
+          choices: [
+            {
+              text: '"是的，但我会记住你们的。"',
+              hint: '告别 [同理心+1]',
+              next: 'forest_exit',
+              effects: { empathy: 1 }
+            }
+          ]
+        },
+
+        'question_sister': {
+          title: '真相',
+          text: `那个身影——小雨的姐姐——听到你的话，表情变得复杂。
+
+"你说得对...我已经不在了。"她的声音变得飘渺。"我只是一段记忆...一段被遗忘的记忆。"
+
+小雨紧紧抓着你的手，身体在颤抖。
+
+"但是..."姐姐微笑着。"能再见到小雨一面...我已经很满足了。"
+
+"年轻人，谢谢你带她来见我。这块星尘碎片...请你收下。"`,
+          effects: { flags: { has_first_fragment: true }, achievement: 'truth_seeker' },
+          choices: [
+            {
+              text: '接过碎片，带着小雨离开',
+              hint: '继续旅程',
+              next: 'forest_exit'
+            }
+          ]
+        },
+
+        'share_memory': {
+          title: '记忆交换',
+          text: `你闭上眼睛，分享了你最珍贵的记忆——那是你与家人在一起的温暖时光。
+
+守护者静静地听着，它身上的记忆碎片开始闪烁。
+
+"多么温暖的记忆..."它说。"你值得拥有这块碎片。"
+
+它将记忆碎片递给你。
+
+"但请记住...记忆是珍贵的。不要轻易遗忘，也不要过度执着。"`,
+          effects: { flags: { has_first_fragment: true }, achievement: 'memory_sharer' },
+          choices: [
+            {
+              text: '带着碎片继续前进',
+              hint: '继续旅程',
+              next: 'forest_exit'
+            }
+          ]
+        },
+
+        'challenge_guardian': {
+          title: '智慧的较量',
+          text: `守护者听到你的话，沉默了片刻。
+
+"你说得对...记忆不应该被用来考验别人。"它的声音变得柔和。"我只是...太害怕失去了。"
+
+"这些记忆碎片...它们曾经是真实存在的人的生活。我不想让它们落入错误的手中。"
+
+"但你...你让我看到了希望。"它将记忆碎片递给你。"请好好保管它。"`,
+          effects: { flags: { has_first_fragment: true }, achievement: 'wise_one' },
+          choices: [
+            {
+              text: '接过碎片，继续前进',
+              hint: '继续旅程',
+              next: 'forest_exit'
+            }
+          ]
+        },
+
+        'fight_guardian': {
+          title: '战斗',
+          text: `你冲向守护者，试图抢夺记忆碎片。
+
+守护者发出愤怒的吼声，它的身体开始变形，化作一团混乱的记忆碎片向你袭来。
+
+一场激烈的战斗开始了...
+
+最终，你凭借勇气和技巧击败了守护者。但你也受了伤，而且...你感觉到守护者在消散前，眼中闪过一丝悲伤。`,
+          effects: { flags: { has_first_fragment: true, fought_guardian: true } },
+          choices: [
+            {
+              text: '收集碎片，继续前进',
+              hint: '继续旅程',
+              next: 'forest_exit'
+            }
+          ]
+        },
+
+        'grab_fragment': {
+          title: '记忆碎片',
+          text: `你迅速抓起记忆碎片，一股强大的力量涌入你的体内。
+
+你看到了无数的画面——这个家庭的幸福时光，他们的欢笑和泪水，以及...他们消散的那一刻。
+
+"谢谢你..."一个声音在你脑海中响起。"终于...有人来带走我们的记忆了。"
+
+你感觉到眼角有些湿润。`,
+          effects: { flags: { has_first_fragment: true } },
+          choices: [
+            {
+              text: '离开小屋，继续旅程',
+              hint: '继续旅程',
+              next: 'forest_exit'
+            }
+          ]
+        },
+
+        'find_voice_source': {
+          title: '声音的来源',
+          text: `你停下手，寻找声音的来源。
+
+从阴影中走出一个模糊的身影——那是一个女人的形象，她的身体由记忆碎片组成。
+
+"请...不要带走那块碎片。"她的声音充满恳求。"那是我们...最后的记忆..."
+
+"但..."她看着你，眼中满是复杂的情感。"也许...是时候让它完成了。"
+
+"请...替我们记住。"`,
+          effects: { flags: { has_first_fragment: true, met_ghost: true } },
+          choices: [
+            {
+              text: '"我会的。我会永远记住你们。"',
+              hint: '承诺 [同理心+2]',
+              next: 'forest_exit',
+              effects: { empathy: 2 }
+            }
+          ]
+        },
+
+        'eavesdrop': {
+          title: '偷听',
+          text: `你靠近窗户，听到屋内传来两个声音：
+
+"...已经太久了...我们应该放下..."
+
+"但是...那些记忆...那些快乐的时光..."
+
+"正是因为我们曾经快乐过...所以才更应该释怀..."
+
+对话渐渐停止了。你感觉到屋内的光芒变得更加柔和...`,
+          choices: [
+            {
+              text: '进入小屋，打断他们',
+              hint: '介入 [勇气+1]',
+              next: 'enter_cabin',
+              effects: { courage: 1 }
+            },
+            {
+              text: '等待他们说完再进去',
+              hint: '尊重 [同理心+1]',
+              next: 'wait_patience',
+              effects: { empathy: 1 }
+            }
+          ]
+        },
+
+        'wait_patience': {
+          title: '等待',
+          text: `你耐心地等待着，屋内的对话渐渐平息。
+
+过了一会儿，屋内的光芒变得柔和起来。你听到一个声音：
+
+"有人在外面吗...请进来吧。"
+
+你推开门，看到两个模糊的身影正在微笑地看着你。
+
+"年轻人...我们等你很久了。"`,
+          effects: { flags: { has_first_fragment: true, patient: true } },
+          choices: [
+            {
+              text: '接受他们的馈赠',
+              hint: '继续旅程',
+              next: 'forest_exit'
+            }
+          ]
+        },
+
+        // ===== 听歌场景 =====
+        'listen_song': {
+          title: '森林之歌',
+          text: `你仔细聆听那歌声，发现那是一首悲伤而美丽的旋律。
+
+歌声似乎在讲述一个关于离别和重逢的故事。你感觉到内心深处有什么东西被触动了...
+
+小雨也安静下来，静静地听着。
+
+"这首歌..."小雨小声说。"姐姐以前也唱过..."`,
+          effects: { flags: { heard_song: true } },
+          choices: [
+            {
+              text: '跟着歌声走去',
+              hint: '跟随旋律 [同理心+1]',
+              next: 'follow_song',
+              effects: { empathy: 1 }
+            },
+            {
+              text: '记住这首歌，继续原来的计划',
+              hint: '保持目标 [智慧+1]',
+              next: 'forgetful_forest_deep',
+              effects: { wisdom: 1 }
+            }
+          ]
+        },
+
+        'follow_song': {
+          title: '歌声的尽头',
+          text: `你跟着歌声走去，来到了一片开满白色花朵的空地。
+
+在空地中央，一个模糊的身影正在唱歌。当你走近时，歌声渐渐停止了。
+
+"啊..."那个身影转过身来。"又一个被歌声吸引来的人..."
+
+"我是这片森林的歌者...曾经是。"她的身影开始变得透明。"现在...我只是一段被遗忘的旋律。"`,
+          choices: [
+            {
+              text: '"你的歌声很美。能再唱一次吗？"',
+              hint: '欣赏艺术 [同理心+1]',
+              next: 'singer_gift',
+              effects: { empathy: 1 }
+            },
+            {
+              text: '"你知道怎么离开这片森林吗？"',
+              hint: '询问方向 [智慧+1]',
+              next: 'singer_direction',
+              effects: { wisdom: 1 }
+            }
+          ]
+        },
+
+        'singer_gift': {
+          title: '歌者的礼物',
+          text: `歌者微笑着，开始演唱那首悲伤而美丽的旋律。
+
+你感觉到周围的空气都在振动，那些白色的花朵开始发光。当歌声结束时，歌者的身影变得更加透明了。
+
+"谢谢你..."她说。"很久没有人愿意听我唱歌了。"
+
+"作为感谢...这个送给你。"
+
+她将一枚闪烁着光芒的羽毛递给你。
+
+"这是一片星尘羽毛...它会指引你找到出路。"`,
+          effects: { flags: { has_first_fragment: true, has_feather: true }, achievement: 'song_lover' },
+          choices: [
+            {
+              text: '感谢歌者，继续旅程',
+              hint: '继续旅程',
+              next: 'forest_exit'
+            }
+          ]
+        },
+
+        'singer_direction': {
+          title: '离开的方向',
+          text: `歌者指向一个方向。
+
+"沿着这条路走...你会找到出口。但要小心...森林深处有更强大的守护者。"
+
+"拿着这个。"她递给你一片闪烁的羽毛。"它会保护你免受黑暗的侵蚀。"`,
+          effects: { flags: { has_first_fragment: true, has_feather: true } },
+          choices: [
+            {
+              text: '感谢歌者，继续旅程',
+              hint: '继续旅程',
+              next: 'forest_exit'
+            }
+          ]
+        },
+
+        // ===== 森林出口 =====
+        'forest_exit': {
+          title: '遗忘森林',
+          text: `你终于走出了遗忘森林。
+
+回头看去，森林依旧笼罩在迷雾之中，但你感觉到...它似乎没有那么可怕了。也许是因为你已经在这里留下了你的印记。
+
+徽章指引着你继续前进。远处，你看到了一座城市的轮廓——那是下一个目的地。
+
+但在这之前...你需要好好休息一下。`,
+          choices: [
+            {
+              text: '在附近找个安全的地方休息',
+              hint: '恢复精力',
+              next: 'rest_area',
+              effects: { flags: { chapter1_complete: true }, achievement: 'chapter1_clear' }
+            },
+            {
+              text: '直接前往城市',
+              hint: '赶路 [勇气+1]',
+              next: 'city_approach',
+              effects: { courage: 1, flags: { chapter1_complete: true }, achievement: 'chapter1_clear' }
+            }
+          ]
+        },
+
+        'rest_area': {
+          title: '短暂的安宁',
+          text: `你找到了一个安全的山洞，决定在这里休息。
+
+回想起今天的经历...你遇到了小雨和她的姐姐，你获得了第一块记忆碎片，你也见识到了这个世界的真实面貌。
+
+明天...还有更多的挑战在等着你。
+
+你闭上眼睛，渐渐进入了梦乡...
+
+在梦中，你看到了无数闪烁的星辰，它们似乎在向你诉说着什么...`,
+          choices: [
+            {
+              text: '继续旅程',
+              hint: '前往下一章',
+              next: 'chapter2_intro'
+            }
+          ]
+        },
+
+        'city_approach': {
+          title: '星落之城',
+          text: `你来到了一座城市的入口。
+
+这座城市的建筑风格独特，尖塔高耸入云，街道上铺满了发光的石板。但与你之前见过的城市不同...这里的居民似乎都戴着面具。
+
+"外来者？"一个戴着银色面具的人走到你面前。"很少有人能从遗忘森林活着走出来。"
+
+"你是...？"你警惕地问道。
+
+"我叫银，是这座城市的守卫。"他打量着你。"你看起来...不像是普通人。"`,
+          effects: { flags: { chapter1_complete: true }, achievement: 'chapter1_clear' },
+          choices: [
+            {
+              text: '"我是星尘编织者。"',
+              hint: '表明身份 [勇气+1]',
+              next: 'reveal_identity',
+              effects: { courage: 1 }
+            },
+            {
+              text: '"我只是个迷路的旅人。"',
+              hint: '隐瞒身份 [智慧+1]',
+              next: 'hide_identity',
+              effects: { wisdom: 1 }
+            }
+          ]
+        },
+
+        // ===== 第二章预告 =====
+        'chapter2_intro': {
+          title: '第二章预告',
+          text: `当你醒来时，你发现自己躺在一片星光之下。
+
+远处，一座巨大的城市映入眼帘。那是...星落之城。
+
+"看来你已经准备好了。"一个熟悉的声音响起。
+
+你转头看去，艾尔文长老正站在不远处。
+
+"第一块记忆碎片...你做得很好。但接下来...会更加困难。"
+
+"星落之城...那里有你需要的下一块碎片，但也有...你最大的敌人。"
+
+他看着你，眼中满是担忧。
+
+"准备好了吗，年轻的编织者？"`,
+          choices: [
+            {
+              text: '"我准备好了。"',
+              hint: '开始第二章 [勇气+1]',
+              next: 'city_approach',
+              effects: { courage: 1 }
+            }
+          ]
+        },
+
+        'reveal_identity': {
+          title: '身份暴露',
+          text: `银听到你的话，沉默了片刻。
+
+"星尘编织者..."他低声重复。"我们等你很久了。"
+
+他摘下面具，露出一张年轻的面孔。
+
+"跟我来...有些人想见你。"`,
+          effects: { flags: { revealed_identity: true } },
+          choices: [
+            {
+              text: '跟随银进入城市',
+              hint: '进入城市',
+              next: 'city_intro'
+            }
+          ]
+        },
+
+        'hide_identity': {
+          title: '隐藏身份',
+          text: `银似乎并不相信你的话，但也没有追问。
+
+"迷路的旅人..."他冷笑一声。"在这座城市里，没有人是迷路的。每个人都知道自己要去哪里...只是不敢承认罢了。"
+
+"跟我来吧...我带你去见城主。"`,
+          effects: { flags: { hidden_identity: true } },
+          choices: [
+            {
+              text: '跟随银进入城市',
+              hint: '进入城市',
+              next: 'city_intro'
+            }
+          ]
+        },
+
+        'city_intro': {
+          title: '星落之城',
+          text: `你跟着银穿过城市的街道。
+
+这里的居民都戴着各式各样的面具，有的华丽，有的简朴。他们默默地走着，仿佛在回避着什么。
+
+"为什么大家都戴着面具？"你问道。
+
+银没有回头。
+
+"在这里...没有人愿意露出真实的自己。因为...一旦被看到真实的样子...就会被黑暗吞噬。"
+
+你感觉到一阵寒意。这座城市...比遗忘森林更加诡异。`,
+          choices: [
+            {
+              text: '继续跟随银',
+              hint: '前往城主府',
+              next: 'city_end'
+            }
+          ]
+        },
+
+        'city_end': {
+          title: '星落之城',
+          text: `你来到了一座宏伟的建筑前——城主府。
+
+银推开门，示意你进去。
+
+"城主在里面等你。"他说。"祝你好运...编织者。"
+
+你深吸一口气，走了进去...
+
+（第一幕完）`,
+          choices: [
+            {
+              text: '返回标题画面',
+              hint: '结束游戏',
+              next: 'start'
+            }
+          ]
+        },
+
+        // ===== 默认场景 =====
+        'default': {
+          title: '未知之地',
+          text: `你发现自己来到了一个陌生的地方。
+
+周围是一片虚无，只有远处闪烁的星光。
+
+"看来...你走错了路。"一个声音响起。
+
+"但这没关系...每一条路都有它的意义。"
+
+你感觉到一股力量在引导你...`,
+          choices: [
+            {
+              text: '返回开始',
+              hint: '重新开始',
+              next: 'start'
+            }
+          ]
+        }
+      }
+    };
+
+    // ========== UI 控制器 ==========
+    const ui = {
+      // 打字机效果
+      async typeWriter(text, element, speed = 30) {
+        return new Promise((resolve) => {
+          engine.isTyping = true;
+          element.innerHTML = '';
+          let index = 0;
+          const cursor = document.createElement('span');
+          cursor.className = 'cursor';
+
+          const type = () => {
+            if (index < text.length) {
+              // 处理换行符
+              if (text[index] === '\n') {
+                element.appendChild(document.createElement('br'));
+              } else {
+                element.appendChild(document.createTextNode(text[index]));
+              }
+              element.appendChild(cursor);
+              index++;
+              engine.typewriterTimeout = setTimeout(type, speed);
+            } else {
+              cursor.remove();
+              engine.isTyping = false;
+              resolve();
+            }
+          };
+
+          // 点击跳过
+          const skipHandler = () => {
+            if (engine.isTyping) {
+              clearTimeout(engine.typewriterTimeout);
+              element.innerHTML = text.replace(/\n/g, '<br>');
+              engine.isTyping = false;
+              resolve();
+            }
+            element.removeEventListener('click', skipHandler);
+          };
+          element.addEventListener('click', skipHandler);
+
+          type();
+        });
+      },
+
+      // 渲染场景
+      async renderScene(scene) {
+        const titleEl = document.getElementById('scene-title');
+        const textEl = document.getElementById('scene-text');
+        const choicesEl = document.getElementById('choices-container');
+
+        // 更新标题
+        titleEl.textContent = scene.title;
+
+        // 清空选择
+        choicesEl.innerHTML = '';
+
+        // 打字机效果显示文本
+        await this.typeWriter(scene.text, textEl);
+
+        // 显示选择
+        if (scene.choices && scene.choices.length > 0) {
+          scene.choices.forEach((choice, index) => {
+            // 检查条件
+            if (!engine.checkCondition(choice.condition)) return;
+
+            const btn = document.createElement('button');
+            btn.className = 'choice-btn';
+            btn.innerHTML = `
+              <span class="choice-text">${choice.text}</span>
+              ${choice.hint ? `<span class="choice-hint">${choice.hint}</span>` : ''}
+            `;
+            btn.onclick = () => engine.makeChoice(index);
+
+            choicesEl.appendChild(btn);
+
+            // 动画延迟显示
+            setTimeout(() => btn.classList.add('visible'), 100 * (index + 1));
+          });
+        }
+      },
+
+      // 创建粒子
+      createParticles() {
+        const container = document.getElementById('particles');
+        for (let i = 0; i < 30; i++) {
+          const particle = document.createElement('div');
+          particle.className = 'particle';
+          particle.style.left = Math.random() * 100 + '%';
+          particle.style.animationDelay = Math.random() * 15 + 's';
+          particle.style.animationDuration = (10 + Math.random() * 10) + 's';
+          container.appendChild(particle);
+        }
+      }
+    };
+
+    // ========== 全局函数 ==========
+
+    // 初始化引擎
+    const engine = new GameEngine();
+
+    // 开始游戏
+    function startGame() {
+      const nameInput = document.getElementById('player-name');
+      engine.player.name = nameInput.value || '旅行者';
+
+      document.getElementById('title-screen').style.display = 'none';
+      document.getElementById('game-screen').style.display = 'block';
+
+      engine.loadScene('start');
+    }
+
+    // 显示菜单
+    function showMenu() {
+      document.getElementById('menu-modal').classList.add('active');
+    }
+
+    // 显示存档界面
+    function showSaveModal(isLoad = false) {
+      const modal = document.getElementById('save-modal');
+      const title = document.getElementById('save-modal-title');
+      const slotsContainer = document.getElementById('save-slots');
+
+      title.textContent = isLoad ? '读取存档' : '保存游戏';
+
+      slotsContainer.innerHTML = '';
+
+      for (let i = 0; i < 3; i++) {
+        const saved = localStorage.getItem(`stardust_save_${i}`);
+        const slot = document.createElement('div');
+        slot.className = 'save-slot' + (saved ? '' : ' empty');
+
+        if (saved) {
+          const data = JSON.parse(saved);
+          slot.innerHTML = `
+            <div class="save-slot-header">
+              <span class="save-slot-title">存档 ${i + 1}</span>
+              <span class="save-slot-date">${data.timestamp}</span>
+            </div>
+            <div class="save-slot-info">
+              ${data.player.name} | ${data.chapter} | 智慧${data.player.stats.wisdom} 勇气${data.player.stats.courage} 同理心${data.player.stats.empathy}
+            </div>
+          `;
+        } else {
+          slot.innerHTML = `
+            <div class="save-slot-header">
+              <span class="save-slot-title">存档 ${i + 1}</span>
+            </div>
+            <div class="save-slot-info">空存档</div>
+          `;
+        }
+
+        slot.onclick = () => {
+          if (isLoad) {
+            if (saved) {
+              engine.loadGame(i);
+              closeModals();
+              document.getElementById('title-screen').style.display = 'none';
+              document.getElementById('game-screen').style.display = 'block';
+            }
+          } else {
+            engine.saveGame(i);
+            showSaveModal(false);
+          }
+        };
+
+        slotsContainer.appendChild(slot);
+      }
+
+      closeModals();
+      modal.classList.add('active');
+    }
+
+    // 显示加载界面
+    function showLoadModal() {
+      showSaveModal(true);
+    }
+
+    // 显示成就
+    function showAchievements() {
+      const modal = document.getElementById('achievement-modal');
+      const list = document.getElementById('achievement-list');
+
+      const allAchievements = [
+        { id: 'first_resonance', name: '初次共鸣', desc: '第一次与星尘产生共鸣', icon: '✨' },
+        { id: 'helper_of_lost', name: '迷途者的引路人', desc: '帮助小雨找到姐姐', icon: '🌟' },
+        { id: 'sisters_reunited', name: '重逢', desc: '让姐妹团聚', icon: '💕' },
+        { id: 'truth_seeker', name: '真相探寻者', desc: '质疑记忆的真实性', icon: '🔍' },
+        { id: 'memory_sharer', name: '记忆分享者', desc: '与守护者分享记忆', icon: '📖' },
+        { id: 'wise_one', name: '智者', desc: '用智慧说服守护者', icon: '🧠' },
+        { id: 'song_lover', name: '聆听者', desc: '聆听歌者的旋律', icon: '🎵' },
+        { id: 'chapter1_clear', name: '启程', desc: '完成第一章', icon: '🗺️' },
+      ];
+
+      list.innerHTML = allAchievements.map(a => `
+        <div class="save-slot ${engine.achievements.includes(a.id) ? '' : 'empty'}">
+          <div class="save-slot-header">
+            <span class="save-slot-title">${a.icon} ${a.name}</span>
+            <span class="save-slot-date">${engine.achievements.includes(a.id) ? '已解锁' : '未解锁'}</span>
+          </div>
+          <div class="save-slot-info">${a.desc}</div>
+        </div>
+      `).join('');
+
+      closeModals();
+      modal.classList.add('active');
+    }
+
+    // 导出存档
+    function exportSave() {
+      const data = engine.exportData();
+      navigator.clipboard.writeText(data).then(() => {
+        alert('存档已复制到剪贴板！');
+      }).catch(() => {
+        prompt('请手动复制以下存档代码：', data);
+      });
+    }
+
+    // 导入存档
+    function importSave() {
+      const data = prompt('请粘贴存档代码：');
+      if (data) {
+        if (engine.importData(data)) {
+          alert('存档导入成功！');
+          document.getElementById('title-screen').style.display = 'none';
+          document.getElementById('game-screen').style.display = 'block';
+        } else {
+          alert('存档导入失败！');
+        }
+      }
+    }
+
+    // 返回标题
+    function returnToTitle() {
+      if (confirm('确定要返回标题画面吗？未保存的进度将丢失。')) {
+        closeModals();
+        document.getElementById('game-screen').style.display = 'none';
+        document.getElementById('title-screen').style.display = 'block';
+      }
+    }
+
+    // 关闭所有模态框
+    function closeModals() {
+      document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
+    }
+
+    // 显示成就通知
+    function showAchievementToast(achievementId) {
+      const allAchievements = {
+        'first_resonance': { name: '初次共鸣', icon: '✨' },
+        'helper_of_lost': { name: '迷途者的引路人', icon: '🌟' },
+        'sisters_reunited': { name: '重逢', icon: '💕' },
+        'truth_seeker': { name: '真相探寻者', icon: '🔍' },
+        'memory_sharer': { name: '记忆分享者', icon: '📖' },
+        'wise_one': { name: '智者', icon: '🧠' },
+        'song_lover': { name: '聆听者', icon: '🎵' },
+        'chapter1_clear': { name: '启程', icon: '🗺️' },
+      };
+
+      const achievement = allAchievements[achievementId];
+      if (!achievement) return;
+
+      const toast = document.createElement('div');
+      toast.className = 'achievement-toast';
+      toast.innerHTML = `
+        <span class="achievement-icon">${achievement.icon}</span>
+        <span class="achievement-text">
+          <small>成就解锁</small>
+          ${achievement.name}
+        </span>
+      `;
+      document.body.appendChild(toast);
+
+      setTimeout(() => toast.remove(), 4000);
+    }
+
+    // 初始化
+    ui.createParticles();
+
+    // 键盘快捷键
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeModals();
+      }
+    });
+  </script>
+</body>
+</html>

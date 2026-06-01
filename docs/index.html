@@ -1,250 +1,214 @@
-﻿<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>多人接力故事台（演示）</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>星尘编年史 - 文字冒险游戏</title>
   <style>
-    :root{font-family: system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;}
-    body{margin:0;padding:18px;background:#0f172a;color:#e6eef8}
-    .wrap{max-width:980px;margin:0 auto}
-    header{display:flex;gap:12px;align-items:center;margin-bottom:18px}
-    button{background:#2563eb;color:#fff;border:0;padding:8px 12px;border-radius:6px;cursor:pointer}
-    input,textarea{padding:8px;border-radius:6px;border:1px solid #334155;background:#071025;color:#eef}
-    .panel{background:#071127;padding:14px;border-radius:8px;margin-bottom:12px}
-    .tree{margin-top:12px}
-    .node{padding:8px;border-radius:6px;border:1px dashed #254; margin:6px 0}
-    .node .meta{font-size:12px;color:#9fb}
-    .controls{display:flex;gap:8px;margin-top:8px}
-    .branch{margin-left:18px;border-left:2px dashed #1f2937;padding-left:10px}
-    .highlight{background:linear-gradient(90deg,#fef08a33,#fb718533);}
-    footer{font-size:12px;color:#89a}
-    .muted{color:#89a}
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-primary: #0a0a1a;
+      --text-primary: #e0e0ff;
+      --accent: #7c5cff;
+      --gold: #ffd700;
+    }
+
+    body {
+      font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    /* 星空背景 */
+    .stars {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .star {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: white;
+      border-radius: 50%;
+      animation: twinkle 3s infinite ease-in-out;
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.3; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.5); }
+    }
+
+    /* 主容器 */
+    .container {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 40px;
+      max-width: 600px;
+      width: 90%;
+    }
+
+    /* 标题 */
+    .title {
+      font-size: 3.5rem;
+      font-weight: bold;
+      margin-bottom: 15px;
+      background: linear-gradient(135deg, var(--accent), var(--gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: glow 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes glow {
+      from { filter: drop-shadow(0 0 10px rgba(124, 92, 255, 0.4)); }
+      to { filter: drop-shadow(0 0 30px rgba(124, 92, 255, 0.6)); }
+    }
+
+    .subtitle {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 1.1rem;
+      margin-bottom: 40px;
+      letter-spacing: 3px;
+    }
+
+    /* 描述 */
+    .description {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 1rem;
+      line-height: 1.8;
+      margin-bottom: 50px;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      border: 1px solid rgba(124, 92, 255, 0.2);
+    }
+
+    /* 按钮 */
+    .btn {
+      display: inline-block;
+      padding: 18px 60px;
+      background: linear-gradient(135deg, var(--accent), #9d7cff);
+      color: white;
+      text-decoration: none;
+      border-radius: 50px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      letter-spacing: 2px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 30px rgba(124, 92, 255, 0.4);
+    }
+
+    .btn:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 40px rgba(124, 92, 255, 0.6);
+    }
+
+    /* 特性列表 */
+    .features {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin-top: 50px;
+      flex-wrap: wrap;
+    }
+
+    .feature {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 0.9rem;
+    }
+
+    .feature-icon {
+      font-size: 1.3rem;
+    }
+
+    /* 底部 */
+    .footer {
+      position: fixed;
+      bottom: 20px;
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 0.8rem;
+    }
+
+    /* 响应式 */
+    @media (max-width: 600px) {
+      .title { font-size: 2.2rem; }
+      .container { padding: 20px; }
+      .btn { padding: 15px 40px; font-size: 1rem; }
+      .features { gap: 15px; }
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <h2 style="margin:0">交互式多人故事台（无账号）</h2>
-      <div class="muted">房间直接生成与导出/导入共享</div>
-    </header>
+  <!-- 星空背景 -->
+  <div class="stars" id="stars"></div>
 
-    <div class="panel">
-      <div style="display:flex;gap:8px;align-items:center">
-        <button id="newRoom">创建房间</button>
-        <input id="roomId" placeholder="房间 ID（空表示新建）" />
-        <button id="joinRoom">加入房间</button>
-        <button id="export">导出状态（复制）</button>
-        <button id="importBtn">导入状态（粘贴）</button>
+  <!-- 主内容 -->
+  <div class="container">
+    <h1 class="title">星尘编年史</h1>
+    <p class="subtitle">— 记忆编织者的旅程 —</p>
+
+    <div class="description">
+      在一个魔法与科技交织的世界，你是一名年轻的"记忆编织者"。<br>
+      穿越不同的记忆碎片，修复被黑暗侵蚀的世界线。<br>
+      每一个选择，都将影响世界的命运...
+    </div>
+
+    <a href="game.html" class="btn">开始旅程</a>
+
+    <div class="features">
+      <div class="feature">
+        <span class="feature-icon">📖</span>
+        <span>沉浸式叙事</span>
       </div>
-      <div style="margin-top:8px" class="muted">当前房间：<span id="currentRoom">（未加入）</span></div>
-    </div>
-
-    <div class="panel">
-      <textarea id="editor" rows="4" style="width:100%" placeholder="写下一段，按“提交”创建新回合（默认接到选中节点下）"></textarea>
-      <div class="controls">
-        <input id="author" placeholder="署名（可留空）" style="flex:0 0 160px" />
-        <button id="submit">提交</button>
-        <button id="voteBtn">为选中节点投票</button>
-        <button id="replay">回放选中分支</button>
-        <button id="exportBranch">导出分支 JSON</button>
+      <div class="feature">
+        <span class="feature-icon">🔀</span>
+        <span>多分支剧情</span>
       </div>
-      <div class="muted" style="margin-top:8px">提示：新房间自动生成根节点。导出可复制到他人“导入”以共享当前故事状态。</div>
+      <div class="feature">
+        <span class="feature-icon">💾</span>
+        <span>存档系统</span>
+      </div>
+      <div class="feature">
+        <span class="feature-icon">🏆</span>
+        <span>成就收集</span>
+      </div>
     </div>
-
-    <div class="panel">
-      <strong>故事树</strong>
-      <div id="tree" class="tree"></div>
-    </div>
-
-    <footer>演示版 · 无后端，房间与状态保存在浏览器 localStorage。使用“导出/导入”在不同设备间共享。</footer>
   </div>
 
-<script>
-(() => {
-  // util
-  const qs = (s) => document.querySelector(s);
-  const uid = () => Math.random().toString(36).slice(2,9);
+  <div class="footer">星尘编年史 © 2026</div>
 
-  const storageKey = (room) => `storyroom:${room}`;
-
-  // default state shape: { roomId, createdAt, nodes: {id:node}, rootId }
-  function newState(roomId){
-    const rootId = 'root-'+uid();
-    const now = Date.now();
-    const nodes = {};
-    nodes[rootId] = { id: rootId, parent: null, text: '故事开始', author: '系统', ts: now, votes:0 };
-    return { roomId, createdAt: now, rootId, nodes };
-  }
-
-  // current runtime
-  let state = null;
-  let selected = null; // node id
-
-  function save(){
-    if(!state) return;
-    localStorage.setItem(storageKey(state.roomId), JSON.stringify(state));
-  }
-  function load(roomId){
-    const raw = localStorage.getItem(storageKey(roomId));
-    if(raw) return JSON.parse(raw);
-    return null;
-  }
-
-  function setRoom(roomId, fromImport){
-    state = load(roomId) || (!fromImport && newState(roomId)) || null;
-    if(!state){
-      alert('找不到房间，考虑创建新房间');
-      return;
+  <script>
+    // 创建星空背景
+    const starsContainer = document.getElementById('stars');
+    for (let i = 0; i < 100; i++) {
+      const star = document.createElement('div');
+      star.className = 'star';
+      star.style.left = Math.random() * 100 + '%';
+      star.style.top = Math.random() * 100 + '%';
+      star.style.animationDelay = Math.random() * 3 + 's';
+      star.style.animationDuration = (2 + Math.random() * 3) + 's';
+      starsContainer.appendChild(star);
     }
-    qs('#currentRoom').textContent = state.roomId;
-    render();
-  }
-
-  // render tree recursively
-  function renderNode(nodeId){
-    const node = state.nodes[nodeId];
-    const el = document.createElement('div');
-    el.className = 'node';
-    if(nodeId === selected) el.classList.add('highlight');
-    const p = document.createElement('div');
-    p.textContent = node.text;
-    p.style.whiteSpace = 'pre-wrap';
-    el.appendChild(p);
-    const meta = document.createElement('div');
-    meta.className = 'meta';
-    meta.textContent = `作者：${node.author||'匿名'} · ${new Date(node.ts).toLocaleString()} · 投票：${node.votes||0}`;
-    el.appendChild(meta);
-
-    // actions
-    const actions = document.createElement('div');
-    actions.className = 'controls';
-    const selectBtn = document.createElement('button'); selectBtn.textContent='选中';
-    selectBtn.onclick = ()=>{ selected = nodeId; render(); };
-    const branchBtn = document.createElement('button'); branchBtn.textContent='在此分支下創建';
-    branchBtn.onclick = ()=>{ selected = nodeId; const txt = qs('#editor').value.trim(); if(!txt){ alert('请输入文本'); return;} submitAt(nodeId); };
-    actions.appendChild(selectBtn); actions.appendChild(branchBtn);
-    el.appendChild(actions);
-
-    // children
-    const children = Object.values(state.nodes).filter(n=>n.parent===nodeId).sort((a,b)=>a.ts-b.ts);
-    if(children.length){
-      const box = document.createElement('div'); box.className='branch';
-      children.forEach(c=> box.appendChild(renderNode(c.id)));
-      el.appendChild(box);
-    }
-    return el;
-  }
-
-  function render(){
-    const tree = qs('#tree'); tree.innerHTML='';
-    if(!state) return;
-    const rootEl = renderNode(state.rootId);
-    tree.appendChild(rootEl);
-  }
-
-  function submitAt(parentId){
-    if(!state) return alert('请先加入或创建房间');
-    const text = qs('#editor').value.trim(); if(!text) return alert('请输入文本');
-    const id = 'n-'+uid();
-    state.nodes[id] = { id, parent: parentId||selected||state.rootId, text, author: qs('#author').value.trim()||'匿名', ts: Date.now(), votes:0 };
-    qs('#editor').value='';
-    save(); render();
-  }
-
-  function voteSelected(){
-    if(!selected) return alert('请先选中节点');
-    state.nodes[selected].votes = (state.nodes[selected].votes||0)+1;
-    save(); render();
-  }
-
-  function exportState(){
-    if(!state) return alert('无状态可导出');
-    const s = JSON.stringify(state);
-    const b = btoa(unescape(encodeURIComponent(s)));
-    // copy to clipboard
-    navigator.clipboard.writeText(b).then(()=>{ alert('已复制导出字符串，可在其他设备使用“导入”粘贴。') });
-  }
-
-  function importStateStr(str){
-    try{
-      const s = decodeURIComponent(escape(atob(str)));
-      const obj = JSON.parse(s);
-      if(!obj.roomId) obj.roomId = 'imp-'+uid();
-      localStorage.setItem(storageKey(obj.roomId), JSON.stringify(obj));
-      setRoom(obj.roomId, true);
-      alert('导入成功，房间ID：'+obj.roomId);
-    }catch(e){ alert('导入失败：字符串格式错误') }
-  }
-
-  function exportBranch(){
-    if(!selected) return alert('请先选中节点');
-    // collect subtree rooted at selected
-    const collected = {};
-    function walk(id){ collected[id] = state.nodes[id]; Object.values(state.nodes).filter(n=>n.parent===id).forEach(c=>walk(c.id)); }
-    walk(selected);
-    const payload = { root: selected, nodes: collected };
-    const s = JSON.stringify(payload);
-    navigator.clipboard.writeText(btoa(unescape(encodeURIComponent(s)))).then(()=>alert('分支已复制到剪贴板（Base64）'));
-  }
-
-  async function replay(){
-    if(!selected) return alert('先选中一个节点作为分支起点');
-    // choose a single branch path by following the most-voted child iteratively
-    let cur = selected;
-    const path = [cur];
-    while(true){
-      const children = Object.values(state.nodes).filter(n=>n.parent===cur);
-      if(children.length===0) break;
-      children.sort((a,b)=>(b.votes||0)-(a.votes||0));
-      cur = children[0].id; path.push(cur);
-      if(path.length>200) break;
-    }
-    // animate
-    for(const id of path){
-      selected = id; render();
-      await new Promise(r=>setTimeout(r, 1200));
-    }
-    alert('回放结束');
-  }
-
-  // UI bindings
-  qs('#newRoom').onclick = ()=>{
-    const id = 'room-'+uid();
-    const st = newState(id);
-    localStorage.setItem(storageKey(id), JSON.stringify(st));
-    setRoom(id);
-    // copy link with room id
-    const url = location.origin + location.pathname + '#room=' + encodeURIComponent(id);
-    navigator.clipboard.writeText(url).then(()=>alert('房间创建并复制带房间ID的链接：'+id));
-  };
-  qs('#joinRoom').onclick = ()=>{
-    const id = qs('#roomId').value.trim();
-    if(!id) return alert('请输入房间 ID');
-    const loaded = load(id);
-    if(!loaded) return alert('房间未找到，本地无该房间，考虑让房间创建者导出状态并分享字符串');
-    setRoom(id);
-  };
-  qs('#submit').onclick = ()=> submitAt(selected||state&&state.rootId);
-  qs('#voteBtn').onclick = voteSelected;
-  qs('#export').onclick = exportState;
-  qs('#importBtn').onclick = ()=>{
-    const s = prompt('粘贴导出字符串（Base64）'); if(!s) return; importStateStr(s);
-  };
-  qs('#exportBranch').onclick = exportBranch;
-  qs('#replay').onclick = replay;
-
-  // try load room from URL hash
-  function initFromHash(){
-    const h = location.hash.slice(1);
-    if(!h) return;
-    const m = /room=(.+)/.exec(h);
-    if(m){ const id = decodeURIComponent(m[1]); const loaded = load(id); if(loaded) setRoom(id); else { alert('URL 中的房间在本地未找到。可联系创建者导出并导入状态。'); } }
-  }
-
-  initFromHash();
-  render();
-})();
-</script>
+  </script>
 </body>
 </html>
