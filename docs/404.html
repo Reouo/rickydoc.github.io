@@ -1,4 +1,103 @@
-<html>
-  <title>找不到网站</title>
-  <h1>啊哦，无法访问链接哦</h1>
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>404 — 你在奇妙的小径上迷路了</title>
+  <style>
+    :root{font-family: system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial}
+    body{margin:0;background:#0b1220;color:#e6f0ff;display:flex;align-items:center;justify-content:center;height:100vh}
+    .card{background:linear-gradient(180deg,#071029 0%,#0b1530 100%);padding:28px;border-radius:12px;box-shadow:0 10px 30px rgba(2,6,23,.6);width:880px;max-width:95%}
+    h1{margin:0 0 8px 0;font-size:28px}
+    p{margin:0 0 16px;color:#9fb}
+    .row{display:flex;gap:12px;align-items:center}
+    input{flex:1;padding:10px;border-radius:8px;border:1px solid #21314a;background:#061226;color:#e6f0ff}
+    button{background:#7c5cff;color:white;border:0;padding:10px 12px;border-radius:8px;cursor:pointer}
+    .map{margin-top:18px;border-radius:8px;padding:12px;background:linear-gradient(180deg,#081125 0%,#061022 100%);display:flex;gap:12px}
+    .minimap{width:200px;height:120px;border-radius:6px;background:#07162b;display:flex;align-items:center;justify-content:center;color:#7f9}
+    .info{flex:1;color:#bcd}
+    .paths{display:flex;gap:8px;margin-top:8px}
+    .path{background:#0f1724;padding:8px;border-radius:8px;border:1px solid #21314a;color:#9fc;cursor:pointer}
+    .small{font-size:12px;color:#778}
+    .logo{font-weight:700;color:#aef}
+    footer{margin-top:12px;font-size:12px;color:#5b6a7a}
+    .spark{display:inline-block;width:8px;height:8px;border-radius:50%;background:radial-gradient(circle,#ffd86b,#ff7ab6);margin-right:8px;vertical-align:middle}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <h1>404 · 迷路了？欢迎到“奇想小径”</h1>
+        <p>页面找不到了，但故事仍在继续。试试下面的选项：回家、探索或随机生成一段接力写作灵感。</p>
+      </div>
+      <div class="logo"><span class="spark"></span>交互式故事台</div>
+    </div>
+
+    <div class="row" style="margin-top:12px">
+      <input id="search" placeholder="输入关键字试着寻找（示例：home，stories）" />
+      <button id="go">快速回首页</button>
+      <button id="wander">漫步小径</button>
+    </div>
+
+    <div class="map">
+      <div class="minimap" id="minimap">🏞️</div>
+      <div class="info">
+        <div class="small">可做的事：</div>
+        <div class="paths">
+          <div class="path" id="gen">随机生成一段灵感</div>
+          <div class="path" id="share">复制当前“迷路信”分享给朋友</div>
+          <div class="path" id="back">返回最近访问页面</div>
+        </div>
+        <div id="output" style="margin-top:10px;color:#cff;white-space:pre-wrap;min-height:48px"></div>
+      </div>
+    </div>
+
+    <footer>提示：这是自定义 404 页面 · <span id="time" class="small"></span></footer>
+  </div>
+
+<script>
+  const out = (t)=>document.getElementById('output').textContent = t;
+  const timeEl = document.getElementById('time'); timeEl.textContent = new Date().toLocaleString();
+  document.getElementById('go').onclick = ()=>{ location.href = './index.html'; };
+  document.getElementById('back').onclick = ()=>{ history.length>1 ? history.back() : location.href='./index.html' };
+  document.getElementById('gen').onclick = ()=>{
+    const seeds = [
+      '在图书馆的角落，纸船上写着秘密地址。',
+      '月光下的猫在码字，留下了一段未完的信。',
+      '旧时钟停在了一个名字，门后是另一个世界。',
+      '他说：如果迷路了，就跟随星光和咖啡的味道。'
+    ];
+    const s = seeds[Math.floor(Math.random()*seeds.length)];
+    out('创意一行：\n' + s + '\n\n按“漫步小径”可让小地图随机移动。');
+  };
+  document.getElementById('share').onclick = async ()=>{
+    const payload = { url: location.href, note: '我在这里迷路了，来接力一段故事吧！', ts: Date.now() };
+    const b = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+    try{ await navigator.clipboard.writeText(b); out('已复制分享字符串（Base64），可让朋友在此导入接力写作。'); }catch(e){ out('复制失败，请手动选中并复制叙述。'); }
+  };
+  document.getElementById('wander').onclick = ()=>{
+    const mm = document.getElementById('minimap');
+    let x = 0; let y = 0;
+    const steps = 12; mm.textContent = '';
+    const anim = []; for(let i=0;i<steps;i++){ anim.push({x:Math.floor(Math.random()*180-90), y:Math.floor(Math.random()*80-40)}); }
+    let i=0; const iv = setInterval(()=>{
+      mm.style.transform = `translate(${anim[i].x/10}px, ${anim[i].y/15}px)`;
+      mm.style.transition = 'transform 600ms ease';
+      if(++i>=anim.length) clearInterval(iv);
+    }, 350);
+    out('你沿着小径漫步，听见远处有人在低声续写故事...');
+  };
+  // quick search (local heuristics)
+  document.getElementById('go').addEventListener('click', ()=>{});
+  document.getElementById('search').addEventListener('keydown', (e)=>{
+    if(e.key==='Enter'){
+      const v = e.target.value.trim().toLowerCase();
+      if(v.includes('home')||v.includes('首页')||v.includes('index')) location.href='./index.html';
+      else if(v.includes('story')||v.includes('故事')) out('建议：访问 ./index.html 查看现有故事，或在故事台创建新的房间。');
+      else out('未找到匹配项，试试“home”或“故事”。');
+    }
+  });
+</script>
+</body>
 </html>
